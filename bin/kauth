@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+aws="AWS"
+azure="Azure"
+gcp="GCP"
+
+staging="Staging"
+production="Production"
+
+cloud=$(printf "$aws\n$azure\n$gcp" | fzf)
+
+if [[ "$cloud" = "$aws" ]]; then
+	envOpt=$(printf "$production\n$staging" | fzf)
+	if [[ "$envOpt" = "$production" ]]; then
+		gimme-aws-creds --profile production
+	elif [[ "$envOpt" = "$staging" ]]; then
+		gimme-aws-creds --profile staging
+	fi
+elif [[ "$cloud" = "$azure" ]]; then
+	envOpt=$(printf "$production\n$staging" | fzf)
+	if [[ "$envOpt" = "$production" ]]; then
+		azp
+	elif [[ "$envOpt" = "$staging" ]]; then
+		azs
+	fi
+elif [[ "$cloud" = "$gcp" ]]; then
+	gcloud auth login --update-adc
+fi

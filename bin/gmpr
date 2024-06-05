@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+remoteUrl=$(git config --get remote.origin.url)
+
+remoteUrl=${remoteUrl##*git@github.com:}
+remoteUrl=${remoteUrl%%.git*}
+
+branch=$(git branch --show-current)
+
+url="https://github.com/${remoteUrl}/compare/${branch}?expand=1"
+
+echo $url
+open $url

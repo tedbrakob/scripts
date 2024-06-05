@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+contextSelection=$(kubectl config get-contexts | fzf | awk '{print $1 " " $2}')
+
+first=$(echo "$contextSelection" | awk '{print $1}')
+second=$(echo "$contextSelection" | awk '{print $2}')
+
+if [[ "$first" = "*" ]]; then
+	selectedContext="$second"
+else
+	selectedContext="$first"
+fi
+
+kubectl config use-context "$selectedContext"
