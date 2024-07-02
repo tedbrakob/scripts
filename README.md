@@ -19,3 +19,7 @@ Add `./bin` to `$PATH`
 ## Github stuff
 
 `gmpr` - git make pull request - Opens the browser to the pull request creation page for the current branch
+
+## Git stuff
+
+`grecent` - list recently used branches with interactive checkout. Copied from https://gist.github.com/jordan-brough/48e2803c0ffa6dc2e0bd
