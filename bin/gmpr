@@ -7,7 +7,11 @@ remoteUrl=${remoteUrl%%.git*}
 
 branch=$(git branch --show-current)
 
-url="https://github.com/${remoteUrl}/compare/${branch}?expand=1"
+if [[ $remoteUrl == https://github.com/* ]]; then
+    url="${remoteUrl}/compare/${branch}?expand=1"
+else
+    url="https://github.com/${remoteUrl}/compare/${branch}?expand=1"
+fi
 
 echo $url
 open $url
