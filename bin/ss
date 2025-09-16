@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+
+# declare -A org_ids
+# org_ids["ted_dev"]="675b7b9f-bb00-4d20-9ea7-135537b5caaa"
+# org_ids["sigma"]="35053f93-9676-49c5-ab76-edfb5a014993"
+
+# org_ids_for_crossover_tasks=(
+# 	"ted_dev:675b7b9f-bb00-4d20-9ea7-135537b5caaa"
+# 	"sigma:35053f93-9676-49c5-ab76-edfb5a014993"
+# )
+
+slate="Slate"
+crossover="Crossover"
+multiplex="Multiplex"
+conductor="Conductor"
+queryrunner="Query-Runner"
+qwill="Qwill"
+evaluator="Evaluator"
+
+services_array=($slate $crossover $conductor $queryrunner $qwill $evaluator $multiplex)
+services=$(IFS=$'\n'; echo "${services_array[*]}")
+service=$(printf "$services" | fzf)
+
+service_start_command=""
+
+if [[ "$service" = "$slate" ]]; then
+	cd $HOME/sigma/slate
+
+	local="Local"
+	remote="Remote"
+
+	api=$(printf "$local\n$remote" | fzf)
+
+	if [[ "$api" = "$local" ]]; then
+		service_start_command="yarn local"
+	elif [[ "$api" = "$remote" ]]; then
+		service_start_command="yarn remote"
+	fi
+elif [[ "$service" = "$crossover" ]]; then
+	cd $HOME/sigma/mono-node/crossover
+
+	org_ted_dev="ted_dev"
+	org_sigma="sigma"
+
+	org_id_ted_dev="675b7b9f-bb00-4d20-9ea7-135537b5caaa"
+	org_id_sigma="35053f93-9676-49c5-ab76-edfb5a014993"
+
+	org=$(printf "ted_dev\nsigma" | fzf)
+
+	if [[ "$org" = "$org_ted_dev" ]]; then
+		tqof="$org_id_ted_dev"
+	elif [[ "$org" = "$org_sigma" ]]; then
+		tqof="$org_id_sigma"
+	fi
+
+	services_local="Local services"
+	services_local_eval="Local eval"
+	services_remote="Remote"
+
+	# services=$(printf "$services_remote\n$services_local_eval\n$services_local" | fzf)
+	services=$(printf "$services_remote\n$services_local" | fzf)
+
+	log_level=warn
+	statsig_overrides="EXPORTS_DYNAMIC_EMAIL_TEXT=1"
+
+	scheduler_flags="TASK_POLL_MS=5000
+RUN_NOTIFICATION_TASKS=true
+TASK_CRONTAB_TRIGGER_ACTIVE=true
+TASK_DISPATCHER_ACTIVE=true
+NEW_NOTIFICATION_QUEUE=true
+DISPATCHER_PER_PROCESS_ADDITIONAL_CONCURRENCY=0"
+
+	mysql_debug=$(printf "sql logs off\nsql logs on" | fzf)
+
+	if [[ "$mysql_debug" = "sql logs on" ]]; then
+		scheduler_flags="$scheduler_flags
+KNEX_DEBUG=true"
+	fi
+
+	all_flags="LOG_LEVEL=\"$log_level\"
+$scheduler_flags
+TASK_QUEUE_ORG_FILTER=\"$tqof\"
+STATSIG_LOCAL_OVERRIDES=\"$statsig_overrides\""
+
+	if [[ "$services" = "$services_local" ]]; then
+		service_start_command="$all_flags
+yarn server:local -- --inspect"
+	elif [[ "$services" = "$services_local_eval" ]]; then
+		service_start_command="$all_flags
+yarn trun-mine --log-prefix=none dev -- --with_local_eval --inspect"
+	elif [[ "$services" = "$services_remote" ]]; then
+		service_start_command="$all_flags
+yarn server --inspect"
+	fi
+elif [[ "$service" = "$multiplex" ]]; then
+	cd $HOME/sigma/mono-go/multiplex
+
+	service_start_command='go run cmd/server/server.go'
+elif [[ "$service" = "$conductor" ]]; then
+	cd $HOME/sigma/mono-go
+
+	service_start_command='go run ./qlc/conductor/cmd/server'
+elif [[ "$service" = "$queryrunner" ]]; then
+	cd $HOME/sigma/mono-go
+
+	service_start_command='go run ./qlc/queryrunner/cmd/server'
+elif [[ "$service" = "$qwill" ]]; then
+	cd $HOME/sigma/qwill
+
+	service_start_command='cargo run'
+elif [[ "$service" = "$evaluator" ]]; then
+	cd $HOME/sigma/retriever
+
+	service_start_command='cargo run -p exporter'
+fi
+
+if [ ! -n "$service_start_command" ]; then
+	echo "no command"
+else
+	# echo "$service_start_command" >> "$HISTFILE"
+	echo "$service_start_command"
+	echo "Start command copied to clipboard (mac only)"
+	echo -n "$service_start_command" | pbcopy
+	# eval "$service_start_command"
+fi

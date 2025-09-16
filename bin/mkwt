@@ -1,0 +1,26 @@
+#!/bin/bash
+
+INPUT=$1
+
+if [[ -z "$INPUT" ]]; then
+  echo "usage: wt worktree-name"
+  return 0
+fi
+
+GIT_DIR="$(dirname $(git rev-parse --path-format=absolute --git-common-dir))"
+
+PROJECT="$(echo "$GIT_DIR" | rev | cut -d'/' -f1 | rev)"
+WORKTREES_DIR="$HOME/sigma/worktrees"
+
+GIT_USER="$(git config user.name | cut -d' ' -f1 | tr '[:upper:]' '[:lower:]')"
+
+
+DIR="$WORKTREES_DIR/$PROJECT/$INPUT"
+git worktree add -b "$GIT_USER/$INPUT" "$DIR" 
+
+if [[ $? -ne 0 ]]; then
+    return 1
+fi
+
+
+cd "$DIR"
